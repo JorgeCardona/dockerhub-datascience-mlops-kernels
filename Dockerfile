@@ -309,7 +309,8 @@ RUN sed -i 's/"display_name"[[:space:]]*:[[:space:]]*".*"/"display_name": "Julia
 
 # 16. Deshabilitar la extensión de consola de JupyterLab para mejorar el rendimiento
 RUN jupyter labextension disable @jupyterlab/console-extension
-
+# 17. Instalar la extensión de JupyterLab para Git
+RUN pip install --no-cache-dir -i https://pypi.org/simple --upgrade jupyterlab-git
 ###############################################################
 ############# DEFINICION DE DIRECTORIO DE TRABAJO #############
 ###############################################################
