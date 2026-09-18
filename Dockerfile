@@ -138,7 +138,10 @@ ARG VERSION_JAVA_KERNEL=1.3.0
 RUN curl -fLo ijava.zip https://github.com/SpencerPark/IJava/releases/download/v${VERSION_JAVA_KERNEL}/ijava-${VERSION_JAVA_KERNEL}.zip \
     && unzip ijava.zip -d /tmp/ijava \
     && python3 /tmp/ijava/install.py --sys-prefix \
-    && rm -rf ijava.zip /tmp/ijava
+    && rm -rf ijava.zip /tmp/ijava \
+    # Descarga e instalación de los logos originales de Java (Taza humeante)
+    && curl -fL "https://icon-icons.com" -o /usr/local/share/jupyter/kernels/java/logo-64x64.png \
+    && curl -fL "https://icon-icons.com" -o /usr/local/share/jupyter/kernels/java/logo-32x32.png
 
 # 6. Kernel de Kotlin
 RUN pip install --no-cache-dir kotlin-jupyter-kernel
