@@ -14,10 +14,14 @@ LABEL maintainer="Jorge Cardona"
 # ==========================================
 # 0. paquetes de compilación y herramientas de desarrollo
 # ==========================================
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
     cmake \
     g++ \
     build-essential \
+    unzip \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
 # ==========================================
@@ -56,15 +60,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # ==========================================
-# 4. GO (Versión exacta fijada)
+# 4. GO 
 # ==========================================
-ARG GO_VERSION=1.27.1
-ENV PATH=/usr/local/go/bin:$PATH
-
-RUN curl -fsSL https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -o go.tar.gz \
-    && tar -xzf go.tar.gz -C /usr/local \
-    && rm go.tar.gz \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y golang \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ==========================================
 # 5. RUST (Versión exacta fijada)
@@ -102,14 +101,13 @@ RUN curl -fsSL https://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}-linu
     && tar -xzf node.tar.gz -C /usr/local --strip-components=1 \
     && rm node.tar.gz \
     && rm -rf /var/lib/apt/lists/*
-	
+
 ###############################################################
 ############ INSTALACION DE KERNELS EN JUPYTER LAB ############
 ###############################################################
 
 # 1. Instalar JupyterLab base e ipykernel
-RUN pip install --no-cache-dir -i https://pypi.org/simple --upgrade jupyterlab
-RUN pip install --no-cache-dir -i https://pypi.org/simple --upgrade ipykernel
+RUN pip install --no-cache-dir -i https://pypi.org/simple --upgrade jupyterlab ipykernel
 
 # 2. Kernel de R (Configuración global)
 RUN Rscript -e "install.packages('IRkernel', repos='http://cran.rstudio.com/')" \
@@ -117,7 +115,6 @@ RUN Rscript -e "install.packages('IRkernel', repos='http://cran.rstudio.com/')" 
 
 # 3. Kernel de C++
 RUN pip install --no-cache-dir -i https://pypi.org/simple --upgrade jupyter-cpp-kernel
-# Elimina kernels de C++ que estan con otras versiones, solo se deja el de C++20
 RUN jupyter kernelspec remove -f cpp03 || true && \
     jupyter kernelspec remove -f cpp11 || true && \
     jupyter kernelspec remove -f cpp14 || true && \
@@ -126,41 +123,35 @@ RUN jupyter kernelspec remove -f cpp03 || true && \
     jupyter kernelspec remove -f cpp98 || true
 
 # 4. Kernel de Go (Gophernotes global)
-RUN go install github.com/gopherdata/gophernotes@v0.7.5 \
-    && mkdir -p /usr/local/share/jupyter/kernels/gophernotes \
-    && cd /usr/local/share/jupyter/kernels/gophernotes \
-    && cp "$(go env GOPATH)"/pkg/mod/github.com/gopherdata/gophernotes@v0.7.5/kernel/* "." \
-    && chmod +w ./kernel.json \
-    && sed "s|gophernotes|$(go env GOPATH)/bin/gophernotes|" < kernel.json.in > kernel.json
+RUN go install github.com/gopherdata/gophernotes@v0.7.5 && \
+    mkdir -p ~/.local/share/jupyter/kernels/gophernotes && \
+    cd ~/.local/share/jupyter/kernels/gophernotes && \
+    cp "$(go env GOPATH)"/pkg/mod/github.com/gopherdata/gophernotes@v0.7.5/kernel/*  "." && \
+    chmod +w ./kernel.json && \
+    sed "s|gophernotes|$(go env GOPATH)/bin/gophernotes|" < kernel.json.in > kernel.json
 
 # 5. Kernel de Java (IJava)
 ARG VERSION_JAVA_KERNEL=1.3.0
 RUN curl -fLo ijava.zip https://github.com/SpencerPark/IJava/releases/download/v${VERSION_JAVA_KERNEL}/ijava-${VERSION_JAVA_KERNEL}.zip \
     && unzip ijava.zip -d /tmp/ijava \
     && python3 /tmp/ijava/install.py --sys-prefix \
-    && rm -rf ijava.zip /tmp/ijava \
-    # Descarga e instalación de los logos originales de Java (Taza humeante)
-    && curl -fL "https://icon-icons.com" -o /usr/local/share/jupyter/kernels/java/logo-64x64.png \
-    && curl -fL "https://icon-icons.com" -o /usr/local/share/jupyter/kernels/java/logo-32x32.png
+    && rm -rf ijava.zip /tmp/ijava
 
-# 6. Kernel de Kotlin
-RUN pip install --no-cache-dir kotlin-jupyter-kernel
-
+# 6. Kernel de Kotlin (Instalación nativa compatible con Python 3.14)
+RUN pip install --no-cache-dir -i https://pypi.org/simple kotlin-jupyter-kernel	
+    
 # 7. KERNEL DE SCALA (Almond Fix)
 ARG ALMOND_SCALA_VERSION=2.13.18
 ARG ALMOND_VERSION=0.14.5
 
-# a. Descargar Coursier
 RUN curl -fLo cs.gz https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz \
     && gzip -d cs.gz \
     && mv cs /usr/local/bin/cs \
-    && chmod +x /usr/local/bin/cs
-
-# b. Generar el instalador de Almond e instalar el kernel globalmente
-RUN cs bootstrap \
-    --scala ${ALMOND_SCALA_VERSION} \
-    almond:${ALMOND_VERSION} \
-    --output /tmp/almond \
+    && chmod +x /usr/local/bin/cs \
+    && cs bootstrap \
+        --scala ${ALMOND_SCALA_VERSION} \
+        almond:${ALMOND_VERSION} \
+        --output /tmp/almond \
     && /tmp/almond --install --global \
     && rm -f /tmp/almond /usr/local/bin/cs
 
@@ -182,8 +173,7 @@ RUN npm install -g ijavascript
 RUN ijsinstall # kernel javaScript
 
 # 11. Instala SoS y la extensión para JupyterLab
-RUN pip install --no-cache-dir -i https://pypi.org/simple --upgrade sos-notebook
-RUN pip install --no-cache-dir -i https://pypi.org/simple --upgrade jupyterlab-sos
+RUN pip install --no-cache-dir -i https://pypi.org/simple --upgrade sos-notebook jupyterlab-sos
 RUN python -m sos_notebook.install
 
 # 12. Instala el kernel de Bash para Jupyter
@@ -223,56 +213,104 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN pip install --no-cache-dir octave_kernel=="${OCTAVE_KERNEL_VERSION}"
 
-RUN KERNEL_DIR="$(jupyter kernelspec list | grep -E '^\s*octave\s+' | awk '{print $2}')" && \
-    if [ -n "$KERNEL_DIR" ]; then \
-        curl -fsSL https://upload.wikimedia.org/wikipedia/commons/2/21/Matlab_Logo.png -o "${KERNEL_DIR}/logo-64x64.png"; \
+# LOGO MATLAB PARA OCTAVE
+RUN OCTAVE_DIR="$(jupyter kernelspec list | grep -E '^\s*octave\s+' | awk '{print $2}')" && \
+    if [ -n "$OCTAVE_DIR" ]; then \
+        curl -fsSL https://upload.wikimedia.org/wikipedia/commons/2/21/Matlab_Logo.png -o "${OCTAVE_DIR}/logo-64x64.png"; \
     fi
 
-# 15. KERNEL DE ELIXIR (Con logo e interfaz oficial)
+# ==========================================
+# 15. KERNEL DE ELIXIR (Limpio y Persistente)
+# ==========================================
 RUN apt-get update && apt-get install -y --no-install-recommends \
         elixir \
         curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# a. Crear el runner wrapper
+# a. Crear el runner wrapper persistente
 RUN mkdir -p /usr/local/share/elixir_kernel \
     && cat <<'EOF' > /usr/local/share/elixir_kernel/kernel.py
 import subprocess
-import sys
+import os
+import json
+
 from ipykernel.kernelbase import Kernel
 
 class ElixirNativeKernel(Kernel):
     implementation = 'Elixir'
-    implementation_version = '1.0'
+    implementation_version = '2.0'
     language = 'elixir'
     language_info = {
         'name': 'elixir',
         'mimetype': 'text/x-elixir',
         'file_extension': '.exs'
     }
-    banner = "Elixir Runner Kernel"
+    banner = "Elixir Persistent Kernel"
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.state_file = "/tmp/elixir_kernel_binding.tmp"
+        if os.path.exists(self.state_file):
+            os.remove(self.state_file)
 
     def do_execute(self, code, silent, store_history=True, user_expressions=None, allow_stdin=False):
         if not code.strip():
             return {'status': 'ok', 'execution_count': self.execution_count, 'payload': [], 'user_expressions': {}}
 
         try:
-            process = subprocess.run(
-                ['elixir', '-e', code],
+            runner_script = f"""
+            Code.put_compiler_option(:ignore_module_conflict, true)
+            Application.put_env(:elixir, :ansi_enabled, false)
+            
+            state_path = "{self.state_file}"
+            
+            binding = if File.exists?(state_path) do
+              try do
+                File.read!(state_path) |> :erlang.binary_to_term()
+              rescue
+                _ -> []
+              end
+            else
+              []
+            end
+
+            code_to_eval = {json.dumps(code)}
+
+            try do
+              {{result, new_binding}} = Code.eval_string(code_to_eval, binding, file: "nofile")
+              File.write!(state_path, :erlang.term_to_binary(new_binding))
+              
+              case result do
+                :ok -> :ok
+                nil -> :ok
+                _ -> IO.puts(inspect(result))
+              end
+            rescue
+              e in CompileError -> IO.puts(:stderr, "** (CompileError) " <> e.description)
+              e in TokenMissingError -> IO.puts(:stderr, "** (TokenMissingError) " <> e.description)
+              e -> IO.puts(:stderr, "** " <> Exception.message(e))
+            end
+            """
+
+            env = os.environ.copy()
+            if "ELIXIR_ERL_OPTIONS" in env:
+                del env["ELIXIR_ERL_OPTIONS"]
+
+            res = subprocess.run(
+                ['elixir', '-e', runner_script],
                 capture_output=True,
                 text=True,
-                check=False
+                env=env
             )
 
-            if not silent:
-                if process.stdout:
-                    self.send_response(self.iopub_socket, 'stream', {'name': 'stdout', 'text': process.stdout})
-                if process.stderr:
-                    self.send_response(self.iopub_socket, 'stream', {'name': 'stderr', 'text': process.stderr})
+            if not silent and res.stdout:
+                self.send_response(self.iopub_socket, 'stream', {'name': 'stdout', 'text': res.stdout})
 
-            status = 'ok' if process.returncode == 0 else 'error'
-            return {'status': status, 'execution_count': self.execution_count, 'payload': [], 'user_expressions': {}}
+            if not silent and res.stderr:
+                self.send_response(self.iopub_socket, 'stream', {'name': 'stderr', 'text': res.stderr})
+
+            return {'status': 'ok', 'execution_count': self.execution_count, 'payload': [], 'user_expressions': {}}
 
         except Exception as e:
             if not silent:
@@ -299,21 +337,27 @@ RUN mkdir -p /usr/local/share/jupyter/kernels/elixir \
 }
 EOF
 
-# c. Descargar los logos oficiales originales de IElixir
+# c. Descargar los logos oficiales
 RUN curl -fsSL https://raw.githubusercontent.com/pprzetacznik/IElixir/master/resources/logo-64x64.png -o /usr/local/share/jupyter/kernels/elixir/logo-64x64.png \
     && curl -fsSL https://raw.githubusercontent.com/pprzetacznik/IElixir/master/resources/logo-32x32.png -o /usr/local/share/jupyter/kernels/elixir/logo-32x32.png
 
-# 15. Personalización del Kernel predeterminado de Python
+# 16. Personalización de Display Names de los Kernels
 RUN python -m ipykernel install --sys-prefix --name python3 --display-name "Python - ML - Data Science"
 RUN sed -i 's/"display_name": ".*"/"display_name": "SoS - Multi-language Notebook"/' /usr/local/share/jupyter/kernels/sos/kernel.json
 RUN sed -i 's/"display_name": ".*"/"display_name": "Ruby"/' /root/.local/share/jupyter/kernels/ruby3/kernel.json
 RUN OCTAVE_PATH=$(jupyter kernelspec list --json | grep -o '"/[^"]*octave"' | head -n 1 | tr -d '"') && sed -i 's/"display_name": ".*"/"display_name": "MATLAB \/ Octave"/' "${OCTAVE_PATH}/kernel.json"
 RUN sed -i 's/"display_name"[[:space:]]*:[[:space:]]*".*"/"display_name": "Julia"/' /root/.local/share/jupyter/kernels/julia-1.13/kernel.json
 
-# 16. Deshabilitar la extensión de consola de JupyterLab para mejorar el rendimiento
+# Habilita el kernel de kotlin para JupyterLab
+RUN mkdir -p /usr/lib/jvm/jdk-25-oracle-x64/bin
+RUN ln -s /usr/bin/java /usr/lib/jvm/jdk-25-oracle-x64/bin/java
+
+# 17. Deshabilitar la extensión de consola de JupyterLab
 RUN jupyter labextension disable @jupyterlab/console-extension
-# 17. Instalar la extensión de JupyterLab para Git
+
+# 18. Instalar la extensión de JupyterLab para Git
 RUN pip install --no-cache-dir -i https://pypi.org/simple --upgrade jupyterlab-git
+
 ###############################################################
 ############# DEFINICION DE DIRECTORIO DE TRABAJO #############
 ###############################################################
