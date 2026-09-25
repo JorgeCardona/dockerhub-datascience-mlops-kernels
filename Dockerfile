@@ -341,7 +341,32 @@ EOF
 RUN curl -fsSL https://raw.githubusercontent.com/pprzetacznik/IElixir/master/resources/logo-64x64.png -o /usr/local/share/jupyter/kernels/elixir/logo-64x64.png \
     && curl -fsSL https://raw.githubusercontent.com/pprzetacznik/IElixir/master/resources/logo-32x32.png -o /usr/local/share/jupyter/kernels/elixir/logo-32x32.png
 
-# 16. Personalización de Display Names de los Kernels
+# 16. KERNEL DE .NET (C#)
+# ==========================================
+# INSTALACIÓN DE .NET SDK Y .NET INTERACTIVE
+# ==========================================
+ARG DOTNET_CHANNEL_VERSION=10.0
+
+ENV DOTNET_ROOT=/usr/share/dotnet
+ENV PATH="${PATH}:${DOTNET_ROOT}:/root/.dotnet/tools"
+
+# a. Descargar e instalar .NET SDK 10
+RUN curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh \
+    && chmod +x /tmp/dotnet-install.sh \
+    && /tmp/dotnet-install.sh --channel "${DOTNET_CHANNEL_VERSION}" --install-dir /usr/share/dotnet --no-path \
+    && rm /tmp/dotnet-install.sh
+
+# b. Enlazar binario de dotnet en /usr/local/bin para que Jupyter lo encuentre
+RUN ln -sf /usr/share/dotnet/dotnet /usr/local/bin/dotnet
+
+# c. Instalar la herramienta global de .NET Interactive y 4. Enlazar en la ruta del sistema
+RUN (dotnet tool install --global Microsoft.dotnet-interactive --prerelease || dotnet tool update --global Microsoft.dotnet-interactive --prerelease) \
+    && ln -sf /root/.dotnet/tools/dotnet-interactive /usr/local/bin/dotnet-interactive
+
+# 4. Registrar los kernels de C#, F# en JupyterLab
+RUN dotnet interactive jupyter install
+
+# 17. Personalización de Display Names de los Kernels
 RUN python -m ipykernel install --sys-prefix --name python3 --display-name "Python - ML - Data Science"
 RUN sed -i 's/"display_name": ".*"/"display_name": "SoS - Multi-language Notebook"/' /usr/local/share/jupyter/kernels/sos/kernel.json
 RUN sed -i 's/"display_name": ".*"/"display_name": "Ruby"/' /root/.local/share/jupyter/kernels/ruby3/kernel.json
@@ -352,10 +377,10 @@ RUN sed -i 's/"display_name"[[:space:]]*:[[:space:]]*".*"/"display_name": "Julia
 RUN mkdir -p /usr/lib/jvm/jdk-25-oracle-x64/bin
 RUN ln -s /usr/bin/java /usr/lib/jvm/jdk-25-oracle-x64/bin/java
 
-# 17. Deshabilitar la extensión de consola de JupyterLab
+# 18. Deshabilitar la extensión de consola de JupyterLab
 RUN jupyter labextension disable @jupyterlab/console-extension
 
-# 18. Instalar la extensión de JupyterLab para Git
+# 19. Instalar la extensión de JupyterLab para Git
 RUN pip install --no-cache-dir -i https://pypi.org/simple --upgrade jupyterlab-git
 
 ###############################################################
