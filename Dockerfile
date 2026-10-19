@@ -366,7 +366,141 @@ RUN (dotnet tool install --global Microsoft.dotnet-interactive --prerelease || d
 # 4. Registrar los kernels de C#, F# en JupyterLab
 RUN dotnet interactive jupyter install
 
-# 17. Personalización de Display Names de los Kernels
+# 17. KERNEL DE Solidity
+# ==========================================
+# INSTALACIÓN y registro del Kernel de Solidity
+# ==========================================
+
+
+USER root
+
+RUN set -eux; \
+    npm install -g solc solidity-shell; \
+    NPM_GLOBAL="$(npm prefix -g)"; \
+    ln -sf "$NPM_GLOBAL/bin/solcjs" /usr/local/bin/solc; \
+    solc --version; \
+    python -m pip install --no-cache-dir jupyter_client ipykernel; \
+    mkdir -p /opt/solidity-kernel /usr/local/share/jupyter/kernels/solidity; \
+    cat > /opt/solidity-kernel/kernel.py <<'PY'
+import json
+import subprocess
+from ipykernel.kernelbase import Kernel
+
+class SolidityKernel(Kernel):
+    implementation = "solidity-kernel"
+    implementation_version = "1.0"
+    language = "solidity"
+    language_version = "0.8.37"
+    language_info = {
+        "name": "solidity",
+        "file_extension": ".sol",
+        "mimetype": "text/x-solidity",
+    }
+    banner = "Solidity compiler kernel"
+
+    def do_execute(self, code, silent, store_history=True,
+                   user_expressions=None, allow_stdin=False):
+        source = code
+        if "pragma solidity" not in source:
+            source = "pragma solidity ^0.8.0;\n" + source
+
+        request = {
+            "language": "Solidity",
+            "sources": {"Contract.sol": {"content": source}},
+            "settings": {
+                "outputSelection": {
+                    "*": {"*": ["abi", "evm.bytecode.object"]}
+                }
+            }
+        }
+
+        result = subprocess.run(
+            ["solc", "--standard-json"],
+            input=json.dumps(request),
+            text=True,
+            capture_output=True
+        )
+
+        output = result.stdout
+        start = output.find("{")
+        try:
+            data = json.loads(output[start:])
+        except (ValueError, json.JSONDecodeError):
+            data = {"errors": [{
+                "formattedMessage": result.stderr or output,
+                "severity": "error"
+            }]}
+
+        messages = [
+            item.get("formattedMessage", "")
+            for item in data.get("errors", [])
+        ]
+
+        for name, contract in data.get(
+            "contracts", {}
+        ).get("Contract.sol", {}).items():
+            messages.append("Contrato: " + name)
+            messages.append("ABI: " + json.dumps(contract.get("abi", [])))
+            messages.append(
+                "Bytecode: " +
+                contract.get("evm", {}).get("bytecode", {}).get("object", "")
+            )
+
+        if not silent:
+            self.send_response(
+                self.iopub_socket,
+                "stream",
+                {"name": "stdout", "text": "\n".join(messages) + "\n"}
+            )
+
+        return {
+            "status": "ok",
+            "execution_count": self.execution_count,
+            "payload": [],
+            "user_expressions": {}
+        }
+
+if __name__ == "__main__":
+    from ipykernel.kernelapp import IPKernelApp
+    IPKernelApp.launch_instance(kernel_class=SolidityKernel)
+PY
+
+RUN cat > /usr/local/share/jupyter/kernels/solidity/kernel.json <<'JSON'
+{
+  "argv": [
+    "python",
+    "/opt/solidity-kernel/kernel.py",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": "Solidity",
+  "language": "solidity"
+}
+JSON
+
+RUN jupyter kernelspec list \
+    && python -m py_compile /opt/solidity-kernel/kernel.py \
+    && npm cache clean --force \
+    && rm -rf /tmp/* /var/tmp/*
+
+RUN set -eux; \
+python -c "import urllib.request; urllib.request.urlretrieve('https://raw.githubusercontent.com/argotorg/solidity/11be2f4881d1644f15b026d1022388f06a034a34/docs/_static/img/logo.svg', '/usr/local/share/jupyter/kernels/solidity/logo-svg.svg')"; \
+python -m py_compile /opt/solidity-kernel/kernel.py; \
+jupyter kernelspec list; \
+npm cache clean --force; \
+rm -rf /tmp/* /var/tmp/*
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends librsvg2-bin; \
+    curl -fsSL https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/java/default.svg \
+      -o /usr/local/share/jupyter/kernels/java/logo-svg.svg; \
+    rsvg-convert -w 64 -h 64 \
+      /usr/local/share/jupyter/kernels/java/logo-svg.svg \
+      -o /usr/local/share/jupyter/kernels/java/logo-64x64.png; \
+    rm -rf /var/lib/apt/lists/*
+    
+# 18. Personalización de Display Names de los Kernels
 RUN python -m ipykernel install --sys-prefix --name python3 --display-name "Python - ML - Data Science"
 RUN sed -i 's/"display_name": ".*"/"display_name": "SoS - Multi-language Notebook"/' /usr/local/share/jupyter/kernels/sos/kernel.json
 RUN sed -i 's/"display_name": ".*"/"display_name": "Ruby"/' /root/.local/share/jupyter/kernels/ruby3/kernel.json
@@ -377,10 +511,10 @@ RUN sed -i 's/"display_name"[[:space:]]*:[[:space:]]*".*"/"display_name": "Julia
 RUN mkdir -p /usr/lib/jvm/jdk-25-oracle-x64/bin
 RUN ln -s /usr/bin/java /usr/lib/jvm/jdk-25-oracle-x64/bin/java
 
-# 18. Deshabilitar la extensión de consola de JupyterLab
+# 19. Deshabilitar la extensión de consola de JupyterLab
 RUN jupyter labextension disable @jupyterlab/console-extension
 
-# 19. Instalar la extensión de JupyterLab para Git
+# 20. Instalar la extensión de JupyterLab para Git
 RUN pip install --no-cache-dir -i https://pypi.org/simple --upgrade jupyterlab-git
 
 ###############################################################
