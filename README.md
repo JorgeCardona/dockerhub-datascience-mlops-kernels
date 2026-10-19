@@ -142,7 +142,6 @@ docker pull jorgecardona/datascience-mlops-kernels:latest
 docker run -d \
   --name datascience-kernels \
   -p 8888:8888 \
-  -v "$(pwd)/notebooks:/notebooks" \
   jorgecardona/datascience-mlops-kernels:latest
 ```
 
@@ -298,7 +297,6 @@ docker pull jorgecardona/datascience-mlops-kernels:latest
 docker run -d \
   --name datascience-kernels \
   -p 8888:8888 \
-  -v "$(pwd)/notebooks:/notebooks" \
   jorgecardona/datascience-mlops-kernels:latest
 ```
 
