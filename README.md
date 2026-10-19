@@ -10,125 +10,135 @@
 
 ## Overview
 
-**dockerhub-datascience-mlops-kernels** is a multi-language Docker environment built for Data Science, Machine Learning, MLOps, scientific computing, software development, and blockchain engineering.
+A multi-language Docker environment for Data Science, Machine Learning, MLOps, scientific computing, software development, and blockchain engineering.
 
-Based on Python 3.14, it provides a preconfigured JupyterLab workspace with multiple programming languages, interactive kernels, development tools, and blockchain frameworks.
+Built on Python 3.14, this image integrates multiple programming languages, Jupyter kernels, development frameworks, and blockchain tools into a unified JupyterLab environment.
 
-The goal is to provide a unified environment where developers, researchers, data scientists, and engineers can work with different technologies without configuring each language and runtime manually.
+The image is designed to provide a reproducible development workspace. Versions explicitly pinned in the Dockerfile are documented below. Components installed without an explicit version may change between image builds.
 
-## Supported Languages and Kernels
+## Software Stack and Versions
 
-| Language | Runtime / Kernel | Main Applications |
+### Base Environment
+
+| Component | Version | Installation / Notes |
 | --- | --- | --- |
-| Python 3.14 | IPython / ipykernel | Data Science, Machine Learning, AI, and MLOps |
-| C++ | jupyter-cpp-kernel | Systems programming and numerical computing |
-| Java 25 | IJava | Enterprise development and JVM applications |
-| Scala | Almond | Big Data and Apache Spark development |
-| R 4.5 | IRkernel | Statistics and data analysis |
-| Julia | IJulia | Scientific and numerical computing |
-| Kotlin | Kotlin Jupyter Kernel | JVM development and data processing |
-| Elixir | Custom Jupyter kernel | Functional and concurrent programming |
-| MATLAB / Octave | octave\_kernel | Numerical computing and engineering |
-| JavaScript | IJavascript | Node.js development and scripting |
-| JavaScript / TypeScript | Deno Jupyter | Modern JavaScript and TypeScript |
-| Go | Gophernotes | Backend and systems development |
-| Rust | evcxr\_jupyter | Systems programming and performance |
-| Ruby | IRuby | Scripting and application development |
-| Bash | bash\_kernel | Shell scripting and automation |
-| C# | .NET Interactive | .NET development |
-| F# | .NET Interactive | Functional programming on .NET |
-| Solidity | Custom Solidity Jupyter kernel | Smart contract compilation and development |
+| Python | `3.14.7` | Base Docker image: `python:3.14.7` |
+| JupyterLab | Latest available at build time | Installed using `pip install --upgrade jupyterlab` |
+| IPython Kernel | Latest compatible at build time | Installed through `ipykernel` |
+| CMake | Distribution-provided | Installed through APT |
+| GNU C++ compiler | Distribution-provided | Installed through `g++` and `build-essential` |
 
-> **Compatibility:** Available runtimes, language versions, and kernel capabilities depend on the installed packages and the version of the Docker image.
+### Programming Languages and Runtimes
 
-## Blockchain Development Environment
+| Language / Runtime | Version | Kernel / Implementation |
+| --- | --- | --- |
+| Python | `3.14.7` | IPython / ipykernel |
+| Java | JDK `25` | IJava `1.3.0` |
+| Scala | `2.13.18` | Almond `0.14.5` |
+| R | `4.5.0` package revision `-3` requested | IRkernel; version not pinned |
+| Go | Distribution-provided | Gophernotes `0.7.5` |
+| Rust | `1.98.1` requested | evcxr\_jupyter; version not pinned |
+| Julia | `1.13.0` | IJulia; package version not pinned |
+| Node.js | `20.19.2` | IJavascript; version not pinned |
+| Deno | Latest available from the installer | Deno Jupyter |
+| Kotlin | Not explicitly pinned | Kotlin Jupyter Kernel |
+| Elixir | Distribution-provided | Custom Jupyter kernel |
+| Ruby | Distribution-provided | IRuby `0.8.3` |
+| C++ | Distribution compiler | jupyter-cpp-kernel; package version not pinned |
+| MATLAB-compatible environment | GNU Octave `9.4.0` requested | octave\_kernel `1.1.1` |
+| Bash | Distribution shell | bash\_kernel; package version not pinned |
+| C# | .NET SDK `10.0` channel | .NET Interactive; tool version not pinned |
+| F# | .NET SDK `10.0` channel | .NET Interactive; tool version not pinned |
+| Solidity | `solc` npm package `0.8.37` in the reported build | Custom Solidity Jupyter kernel `1.0` |
+| JavaScript | Node.js `20.19.2` | IJavascript |
+| TypeScript / JavaScript | Deno installer version | Deno Jupyter |
 
-The image includes a blockchain development toolchain for compiling, testing, deploying, and interacting with Solidity smart contracts.
+**Version policy:** A requested version is not necessarily proof of the version ultimately installed. APT package availability, upstream installers, package resolution, and compatibility constraints can affect the final result. The Docker build should verify the installed version.
 
-### Included Tools
+### Blockchain Development Stack
 
-- **Solidity (****`solc`****)** — Compiles smart contracts and generates ABI and bytecode artifacts.
-- **Solidity Jupyter Kernel** — Compiles Solidity source code directly in JupyterLab notebook cells.
-- **Ganache** — Runs a local Ethereum-compatible blockchain for development and testing.
-- **Hardhat** — Provides smart contract development, automated testing, deployment, and debugging.
-- **Ethers.js** — JavaScript library for interacting with Ethereum-compatible blockchains.
-- **Foundry** — Smart contract development toolkit:
-  - `forge`: Build, test, and deploy smart contracts.
-  - `cast`: Interact with blockchain RPC endpoints and smart contracts.
-  - `anvil`: Run a local Ethereum development node.
-  - `chisel`: Interactive Solidity command-line environment.
+| Tool | Version / Configuration | Purpose |
+| --- | --- | --- |
+| Solidity compiler (`solc`) | `0.8.37` in the reported build | Compile Solidity contracts |
+| Solidity Jupyter kernel | Custom implementation `1.0` | Compile Solidity directly in notebook cells |
+| Ganache | `7.9.2` in the reported output | Local Ethereum-compatible blockchain |
+| Hardhat | `2.26.3` | Smart contract development and testing |
+| `@nomicfoundation/hardhat-ethers` | `3.0.8` | Hardhat integration with Ethers.js |
+| Ethers.js | Major version `6`; exact patch not pinned | Ethereum JavaScript library |
+| Foundry | Not explicitly pinned | Smart contract development toolkit |
+| Forge | Installed through Foundry | Build, test, and deploy contracts |
+| Cast | Installed through Foundry | Blockchain RPC and contract interaction |
+| Anvil | Installed through Foundry | Local Ethereum development node |
+| Chisel | Installed through Foundry | Interactive Solidity environment |
 
-### Solidity in JupyterLab
+**Important:** The versions above reflect the Dockerfile configuration and the installation output previously reported. They are not a guarantee that every version has been verified in the final published image. In particular, Foundry is installed through `foundryup` without a pinned release, and the exact version can change between builds.
 
-The custom Solidity kernel compiles source code entered directly into notebook cells and displays compiler diagnostics and generated artifacts, including ABI and bytecode.
+### Jupyter Kernel Inventory
 
-Example:
+The configured environment includes the following kernel families:
+
+- Python — IPython / ipykernel
+- C++ — jupyter-cpp-kernel
+- Java — IJava
+- Scala — Almond
+- R — IRkernel
+- Go — Gophernotes
+- Rust — evcxr\_jupyter
+- Julia — IJulia
+- JavaScript — IJavascript
+- Deno — Deno Jupyter
+- Kotlin — Kotlin Jupyter Kernel
+- Elixir — Custom Jupyter kernel
+- Ruby — IRuby
+- MATLAB-compatible computing — GNU Octave / octave\_kernel
+- Bash — bash\_kernel
+- C# and F# — .NET Interactive
+- Solidity — Custom Solidity Jupyter kernel
+
+Kernel availability should be confirmed using `jupyter kernelspec list` inside the built image.
+
+## Version Verification
+
+Run the following commands inside the container to inspect installed versions:
 
 ```
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+python --version
+jupyter lab --version
+java --version
+scala -version
+R --version
+go version
+rustc --version
+julia --version
+node --version
+deno --version
+dotnet --version
+ruby --version
+g++ --version
+octave --version
 
-contract HelloWorld {
-    string public message = "Hello, Solidity!";
-
-    function setMessage(string memory newMessage) public {
-        message = newMessage;
-    }
-}
-```
-
-The kernel handles compilation. Deploying contracts, executing transactions, and interacting with deployed contracts require a blockchain node and suitable tools such as Ganache, Hardhat, or Anvil.
-
-### Verify Blockchain Tools
-
-Run the following commands inside the container:
-
-```
 solc --version
 ganache --version
 
 cd /opt/solidity-workspace
-
 ./node_modules/.bin/hardhat --version
-npm ls hardhat @nomicfoundation/hardhat-ethers ethers
+npm ls --depth=0
 
 forge --version
 cast --version
 anvil --version
 chisel --version
+
+jupyter kernelspec list
 ```
 
-Foundry commands require a successful Foundry installation and the appropriate executable paths. Hardhat commands should be run from the project directory.
+Some commands may be unavailable if an optional installation failed or a tool is not included in the final image.
 
-### Security Considerations
-
-- Never use development private keys or test accounts with real funds.
-- Do not expose blockchain RPC endpoints publicly without appropriate access controls.
-- Keep production credentials and private keys outside the Docker image.
-- Use a secrets management solution for production deployments.
-- Treat development blockchain accounts and their private keys as disposable.
-
-## Key Features
-
-- **Multi-language JupyterLab:** Work with different programming languages from a single interface.
-- **Data Science and MLOps:** Python-based analytical and machine learning workflows.
-- **Blockchain development:** Solidity compilation and Ethereum development tools.
-- **Git integration:** Includes the `jupyterlab-git` extension.
-- **Containerized environment:** A reproducible workspace based on Docker.
-- **Persistent notebooks:** Uses `/notebooks` as the default working directory.
-- **Custom kernels:** Additional kernel configurations for languages requiring specialized setup.
-
-## Quick Start
-
-### 1\. Pull the Docker Image
+## Build and Run
 
 ```
 docker pull jorgecardona/datascience-mlops-kernels:latest
-```
 
-### 2\. Run the Container
-
-```
 docker run -d \
   --name datascience-kernels \
   -p 8888:8888 \
@@ -136,114 +146,19 @@ docker run -d \
   jorgecardona/datascience-mlops-kernels:latest
 ```
 
-### 3\. Open JupyterLab
+Open JupyterLab at `http://localhost:8888`.
 
-Navigate to:
+## Reproducibility
 
-```
-http://localhost:8888
-```
+To achieve fully reproducible builds, pin all relevant versions, including:
 
-The example assumes JupyterLab starts on port `8888`. Configure authentication according to your deployment requirements.
+- Python packages and Jupyter extensions.
+- APT package versions or a fixed base-image digest.
+- npm dependencies and Foundry releases.
+- Deno and .NET tool versions.
+- Kernel package versions and language package environments.
 
-### Windows PowerShell
-
-```
-New-Item -ItemType Directory -Force .\notebooks
-
-docker run -d `
-  --name datascience-kernels `
-  -p 8888:8888 `
-  -v "${PWD}/notebooks:/notebooks" `
-  jorgecardona/datascience-mlops-kernels:latest
-```
-
-## Build the Docker Image
-
-Clone the repository:
-
-```
-git clone https://github.com/JorgeCardona/dockerhub-datascience-mlops-kernels.git
-cd dockerhub-datascience-mlops-kernels
-```
-
-Build the image:
-
-```
-docker build \
-  --tag jorgecardona/datascience-mlops-kernels:latest .
-```
-
-Push the image to Docker Hub:
-
-```
-docker push jorgecardona/datascience-mlops-kernels:latest
-```
-
-## Verify the Installation
-
-### List Jupyter Kernels
-
-```
-jupyter kernelspec list
-```
-
-### Check Language Runtimes
-
-```
-python --version
-java --version
-R --version
-julia --version
-go version
-rustc --version
-node --version
-deno --version
-dotnet --version
-```
-
-### Check Blockchain Tools
-
-```
-solc --version
-ganache --version
-forge --version
-cast --version
-anvil --version
-chisel --version
-```
-
-Some commands require a particular working directory or an executable available in `PATH`.
-
-## Workspace and Persistent Storage
-
-The default working directory is:
-
-```
-/notebooks
-```
-
-Mount a local directory to preserve notebooks and project files when the container is removed or recreated.
-
-## Network Ports
-
-| Port | Purpose |
-| --- | --- |
-| `8888` | JupyterLab |
-| `8545` | Typical Ethereum JSON-RPC endpoint when a blockchain node is running and configured |
-
-Additional ports can be published for services explicitly started inside the container.
-
-## Repository and Distribution
-
-- **GitHub:** https://github.com/JorgeCardona/dockerhub-datascience-mlops-kernels
-- **Docker Hub:** [https://hub.docker.com/r/jorgecardona/datascience-mlops-kernels](<https://hub.docker.com/r/jorgecardona/datascience-mlops-kernels>)
-
-## Disclaimer
-
-This project integrates third-party software into a containerized development environment. Each language runtime, kernel, compiler, and framework is maintained by its respective project.
-
-Available features and compatibility depend on the image version and installed dependencies.
+The `latest` Docker tag is mutable and may point to different builds over time.
 
 ---
 
@@ -251,125 +166,135 @@ Available features and compatibility depend on the image version and installed d
 
 ## Descripción general
 
-**dockerhub-datascience-mlops-kernels** es un entorno Docker multilenguaje diseñado para Ciencia de Datos, Machine Learning, MLOps, computación científica, desarrollo de software e ingeniería blockchain.
+Entorno Docker multilenguaje para Ciencia de Datos, Machine Learning, MLOps, computación científica, desarrollo de software e ingeniería blockchain.
 
-Basado en Python 3.14, proporciona un entorno JupyterLab preconfigurado con múltiples lenguajes de programación, kernels interactivos, herramientas de desarrollo y frameworks para blockchain.
+Basada en Python 3.14, esta imagen integra varios lenguajes de programación, kernels de Jupyter, frameworks de desarrollo y herramientas blockchain en un entorno unificado de JupyterLab.
 
-El objetivo es ofrecer un espacio de trabajo unificado donde desarrolladores, investigadores, científicos de datos e ingenieros puedan trabajar con distintas tecnologías sin tener que configurar manualmente cada lenguaje y entorno de ejecución.
+El objetivo es proporcionar un espacio de trabajo reproducible. Las versiones fijadas explícitamente en el Dockerfile se documentan a continuación. Los componentes instalados sin una versión explícita pueden cambiar entre compilaciones de la imagen.
 
-## Lenguajes y kernels soportados
+## Lenguajes, herramientas y versiones
 
-| Lenguaje | Runtime / Kernel | Aplicaciones principales |
+### Entorno base
+
+| Componente | Versión | Instalación / Notas |
 | --- | --- | --- |
-| Python 3.14 | IPython / ipykernel | Ciencia de Datos, Machine Learning, IA y MLOps |
-| C++ | jupyter-cpp-kernel | Programación de sistemas y computación numérica |
-| Java 25 | IJava | Desarrollo empresarial y aplicaciones JVM |
-| Scala | Almond | Big Data y desarrollo con Apache Spark |
-| R 4.5 | IRkernel | Estadística y análisis de datos |
-| Julia | IJulia | Computación científica y numérica |
-| Kotlin | Kotlin Jupyter Kernel | Desarrollo JVM y procesamiento de datos |
-| Elixir | Kernel Jupyter personalizado | Programación funcional y concurrente |
-| MATLAB / Octave | octave\_kernel | Computación numérica e ingeniería |
-| JavaScript | IJavascript | Desarrollo con Node.js y scripting |
-| JavaScript / TypeScript | Deno Jupyter | Desarrollo moderno con JavaScript y TypeScript |
-| Go | Gophernotes | Desarrollo backend y de sistemas |
-| Rust | evcxr\_jupyter | Programación de sistemas y alto rendimiento |
-| Ruby | IRuby | Automatización y desarrollo de aplicaciones |
-| Bash | bash\_kernel | Automatización y scripting de shell |
-| C# | .NET Interactive | Desarrollo sobre .NET |
-| F# | .NET Interactive | Programación funcional sobre .NET |
-| Solidity | Kernel Jupyter personalizado para Solidity | Compilación y desarrollo de contratos inteligentes |
+| Python | `3.14.7` | Imagen base: `python:3.14.7` |
+| JupyterLab | Última disponible durante la compilación | Instalado con `pip install --upgrade jupyterlab` |
+| IPython Kernel | Última versión compatible durante la compilación | Instalado mediante `ipykernel` |
+| CMake | Versión de la distribución | Instalado mediante APT |
+| Compilador GNU C++ | Versión de la distribución | Instalado mediante `g++` y `build-essential` |
 
-> **Compatibilidad:** Los runtimes, las versiones de los lenguajes y las capacidades de cada kernel dependen de los paquetes instalados y de la versión de la imagen Docker.
+### Lenguajes de programación y runtimes
 
-## Entorno de desarrollo blockchain
+| Lenguaje / Runtime | Versión | Kernel / Implementación |
+| --- | --- | --- |
+| Python | `3.14.7` | IPython / ipykernel |
+| Java | JDK `25` | IJava `1.3.0` |
+| Scala | `2.13.18` | Almond `0.14.5` |
+| R | Se solicita el paquete `4.5.0-3` | IRkernel; versión no fijada |
+| Go | Versión de la distribución | Gophernotes `0.7.5` |
+| Rust | Se solicita `1.98.1` | evcxr\_jupyter; versión no fijada |
+| Julia | `1.13.0` | IJulia; versión del paquete no fijada |
+| Node.js | `20.19.2` | IJavascript; versión no fijada |
+| Deno | Última versión disponible del instalador | Deno Jupyter |
+| Kotlin | Sin versión explícitamente fijada | Kotlin Jupyter Kernel |
+| Elixir | Versión de la distribución | Kernel Jupyter personalizado |
+| Ruby | Versión de la distribución | IRuby `0.8.3` |
+| C++ | Compilador de la distribución | jupyter-cpp-kernel; versión no fijada |
+| Entorno compatible con MATLAB | GNU Octave `9.4.0` solicitado | octave\_kernel `1.1.1` |
+| Bash | Shell de la distribución | bash\_kernel; versión no fijada |
+| C# | Canal del SDK .NET `10.0` | .NET Interactive; versión de la herramienta no fijada |
+| F# | Canal del SDK .NET `10.0` | .NET Interactive; versión de la herramienta no fijada |
+| Solidity | Paquete npm `solc` `0.8.37` en la compilación reportada | Kernel Jupyter personalizado `1.0` |
+| JavaScript | Node.js `20.19.2` | IJavascript |
+| TypeScript / JavaScript | Versión instalada por Deno | Deno Jupyter |
 
-La imagen incorpora herramientas para compilar, probar, desplegar e interactuar con contratos inteligentes escritos en Solidity.
+**Política de versiones:** Solicitar una versión no garantiza que esa versión haya quedado instalada. La disponibilidad de paquetes APT, los instaladores externos, la resolución de dependencias y las restricciones de compatibilidad pueden afectar al resultado final. La compilación Docker debe verificar las versiones realmente instaladas.
 
-### Herramientas incluidas
+### Herramientas de desarrollo blockchain
 
-- **Solidity (****`solc`****)** — Compila contratos inteligentes y genera los artefactos ABI y bytecode.
-- **Kernel Jupyter de Solidity** — Permite compilar código Solidity directamente en las celdas de los notebooks de JupyterLab.
-- **Ganache** — Ejecuta una blockchain local compatible con Ethereum para desarrollo y pruebas.
-- **Hardhat** — Facilita el desarrollo, las pruebas automatizadas, el despliegue y la depuración de contratos inteligentes.
-- **Ethers.js** — Biblioteca JavaScript para interactuar con blockchains compatibles con Ethereum.
-- **Foundry** — Kit de herramientas para desarrollo de contratos inteligentes:
-  - `forge`: Compilar, probar y desplegar contratos inteligentes.
-  - `cast`: Interactuar con endpoints RPC y contratos inteligentes.
-  - `anvil`: Ejecutar un nodo local de desarrollo compatible con Ethereum.
-  - `chisel`: Entorno interactivo de Solidity desde la línea de comandos.
+| Herramienta | Versión / Configuración | Función |
+| --- | --- | --- |
+| Compilador Solidity (`solc`) | `0.8.37` en la salida reportada | Compilar contratos Solidity |
+| Kernel Jupyter de Solidity | Implementación personalizada `1.0` | Compilar Solidity desde celdas del notebook |
+| Ganache | `7.9.2` en la salida reportada | Blockchain local compatible con Ethereum |
+| Hardhat | `2.26.3` | Desarrollo y pruebas de contratos inteligentes |
+| `@nomicfoundation/hardhat-ethers` | `3.0.8` | Integración de Hardhat con Ethers.js |
+| Ethers.js | Versión principal `6`; parche exacto no fijado | Biblioteca JavaScript para Ethereum |
+| Foundry | Sin versión explícitamente fijada | Kit de herramientas para contratos inteligentes |
+| Forge | Instalado mediante Foundry | Compilar, probar y desplegar contratos |
+| Cast | Instalado mediante Foundry | Interacción con RPC y contratos |
+| Anvil | Instalado mediante Foundry | Nodo local de desarrollo de Ethereum |
+| Chisel | Instalado mediante Foundry | Entorno interactivo de Solidity |
 
-### Solidity en JupyterLab
+**Importante:** Las versiones anteriores reflejan la configuración del Dockerfile y las salidas de instalación reportadas. No garantizan que todas hayan sido verificadas en la imagen publicada final. En particular, Foundry se instala mediante `foundryup` sin fijar una versión, por lo que puede cambiar entre compilaciones.
 
-El kernel personalizado de Solidity compila el código introducido directamente en las celdas del notebook y muestra los diagnósticos del compilador y los artefactos generados, incluidos ABI y bytecode.
+### Inventario de kernels de Jupyter
 
-Ejemplo:
+El entorno está configurado para incluir las siguientes familias de kernels:
+
+- Python — IPython / ipykernel
+- C++ — jupyter-cpp-kernel
+- Java — IJava
+- Scala — Almond
+- R — IRkernel
+- Go — Gophernotes
+- Rust — evcxr\_jupyter
+- Julia — IJulia
+- JavaScript — IJavascript
+- Deno — Deno Jupyter
+- Kotlin — Kotlin Jupyter Kernel
+- Elixir — Kernel Jupyter personalizado
+- Ruby — IRuby
+- Computación compatible con MATLAB — GNU Octave / octave\_kernel
+- Bash — bash\_kernel
+- C# y F# — .NET Interactive
+- Solidity — Kernel Jupyter personalizado
+
+Confirma la disponibilidad real de los kernels ejecutando `jupyter kernelspec list` dentro de la imagen construida.
+
+## Verificación de versiones
+
+Ejecuta estos comandos dentro del contenedor para consultar las versiones instaladas:
 
 ```
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+python --version
+jupyter lab --version
+java --version
+scala -version
+R --version
+go version
+rustc --version
+julia --version
+node --version
+deno --version
+dotnet --version
+ruby --version
+g++ --version
+octave --version
 
-contract HolaMundo {
-    string public mensaje = "¡Hola, Solidity!";
-
-    function cambiarMensaje(string memory nuevoMensaje) public {
-        mensaje = nuevoMensaje;
-    }
-}
-```
-
-El kernel se encarga de la compilación. Para desplegar contratos, ejecutar transacciones e interactuar con contratos desplegados se necesita un nodo blockchain y herramientas adecuadas, como Ganache, Hardhat o Anvil.
-
-### Validar las herramientas blockchain
-
-Ejecuta estos comandos dentro del contenedor:
-
-```
 solc --version
 ganache --version
 
 cd /opt/solidity-workspace
-
 ./node_modules/.bin/hardhat --version
-npm ls hardhat @nomicfoundation/hardhat-ethers ethers
+npm ls --depth=0
 
 forge --version
 cast --version
 anvil --version
 chisel --version
+
+jupyter kernelspec list
 ```
 
-Los comandos de Foundry requieren que la instalación haya finalizado correctamente y que los ejecutables estén disponibles en `PATH`. Los comandos de Hardhat deben ejecutarse desde el directorio del proyecto.
+Algunos comandos pueden no estar disponibles si falla una instalación opcional o si una herramienta no está incluida en la imagen final.
 
-### Consideraciones de seguridad
-
-- Nunca utilices claves privadas de desarrollo ni cuentas de prueba con fondos reales.
-- No expongas públicamente endpoints RPC sin controles de acceso adecuados.
-- Mantén las credenciales de producción y las claves privadas fuera de la imagen Docker.
-- Utiliza un sistema de gestión de secretos para despliegues de producción.
-- Considera desechables las cuentas blockchain de desarrollo y sus claves privadas.
-
-## Características principales
-
-- **JupyterLab multilenguaje:** Trabaja con diferentes lenguajes de programación desde una única interfaz.
-- **Ciencia de Datos y MLOps:** Entorno basado en Python para análisis de datos y flujos de trabajo de Machine Learning.
-- **Desarrollo blockchain:** Compilación de Solidity y herramientas para el ecosistema Ethereum.
-- **Integración con Git:** Incluye la extensión `jupyterlab-git`.
-- **Entorno contenerizado:** Espacio de trabajo reproducible mediante Docker.
-- **Notebooks persistentes:** Utiliza `/notebooks` como directorio de trabajo predeterminado.
-- **Kernels personalizados:** Configuraciones adicionales para lenguajes que requieren una instalación especializada.
-
-## Inicio rápido
-
-### 1\. Descargar la imagen Docker
+## Construcción y ejecución
 
 ```
 docker pull jorgecardona/datascience-mlops-kernels:latest
-```
 
-### 2\. Ejecutar el contenedor
-
-```
 docker run -d \
   --name datascience-kernels \
   -p 8888:8888 \
@@ -377,113 +302,36 @@ docker run -d \
   jorgecardona/datascience-mlops-kernels:latest
 ```
 
-### 3\. Abrir JupyterLab
+Abre JupyterLab en `http://localhost:8888`.
 
-Accede desde tu navegador a:
+## Reproducibilidad
 
-```
-http://localhost:8888
-```
+Para obtener compilaciones completamente reproducibles, fija todas las versiones relevantes, incluyendo:
 
-Este ejemplo supone que JupyterLab se inicia en el puerto `8888`. Configura la autenticación de acuerdo con los requisitos de tu despliegue.
+- Paquetes Python y extensiones de Jupyter.
+- Versiones de paquetes APT o un digest fijo de la imagen base.
+- Dependencias npm y versiones de Foundry.
+- Versiones de Deno y de las herramientas .NET.
+- Versiones de los paquetes de kernels y de los entornos de cada lenguaje.
 
-### Windows PowerShell
+La etiqueta Docker `latest` es mutable y puede apuntar a diferentes compilaciones con el paso del tiempo.
 
-```
-New-Item -ItemType Directory -Force .\notebooks
-
-docker run -d `
-  --name datascience-kernels `
-  -p 8888:8888 `
-  -v "${PWD}/notebooks:/notebooks" `
-  jorgecardona/datascience-mlops-kernels:latest
-```
-
-## Construir la imagen Docker
-
-Clona el repositorio:
-
-```
-git clone https://github.com/JorgeCardona/dockerhub-datascience-mlops-kernels.git
-cd dockerhub-datascience-mlops-kernels
-```
-
-Construye la imagen:
-
-```
-docker build \
-  --tag jorgecardona/datascience-mlops-kernels:latest .
-```
-
-Publica la imagen en Docker Hub:
-
-```
-docker push jorgecardona/datascience-mlops-kernels:latest
-```
-
-## Validar la instalación
-
-### Listar los kernels de Jupyter
-
-```
-jupyter kernelspec list
-```
-
-### Comprobar los runtimes de los lenguajes
-
-```
-python --version
-java --version
-R --version
-julia --version
-go version
-rustc --version
-node --version
-deno --version
-dotnet --version
-```
-
-### Comprobar las herramientas blockchain
-
-```
-solc --version
-ganache --version
-forge --version
-cast --version
-anvil --version
-chisel --version
-```
-
-Algunos comandos requieren ejecutarse desde un directorio concreto o tener los ejecutables disponibles en `PATH`.
-
-## Espacio de trabajo y almacenamiento persistente
-
-El directorio de trabajo predeterminado es:
-
-```
-/notebooks
-```
-
-Vincula una carpeta local para conservar notebooks y archivos del proyecto aunque elimines o recrees el contenedor.
-
-## Puertos de red
-
-| Puerto | Uso |
-| --- | --- |
-| `8888` | JupyterLab |
-| `8545` | Endpoint JSON-RPC habitual de Ethereum cuando hay un nodo blockchain ejecutándose y configurado |
-
-Puedes publicar puertos adicionales para los servicios que inicies explícitamente dentro del contenedor.
+---
 
 ## Repositorio y distribución
 
 - **GitHub:** https://github.com/JorgeCardona/dockerhub-datascience-mlops-kernels
 - **Docker Hub:** [https://hub.docker.com/r/jorgecardona/datascience-mlops-kernels](<https://hub.docker.com/r/jorgecardona/datascience-mlops-kernels>)
 
-## Aviso legal
+### Una precisión importante sobre tu Dockerfile
 
-Este proyecto integra software de terceros en un entorno de desarrollo contenerizado. Cada runtime, kernel, compilador y framework es mantenido por su respectivo proyecto.
+Hay varias versiones que conviene corregir o verificar antes de afirmar que la imagen está completamente fijada:
 
-Las funcionalidades disponibles y la compatibilidad dependen de la versión de la imagen y de las dependencias instaladas.
+- R: `R_VERSION=4.5.0-3` corresponde a la versión del paquete Debian solicitada, no necesariamente a la versión upstream de R que muestra `R --version`.
+- Rust: `1.98.1` debe comprobarse en el canal de distribución configurado; si esa versión no está disponible, la compilación fallará.
+- Foundry: `foundryup` sin una versión concreta no produce una instalación reproducible.
+- Ganache: `npm install -g ganache` sin versión instala la versión que npm resuelva en ese momento.
+- JupyterLab, Kotlin, C++, Deno y otros paquetes: varias instalaciones utilizan versiones sin fijar.
+- Solidity: el kernel personalizado indica `language_version = "0.8.37"`, pero conviene validar ese dato contra `solc --version` durante la compilación.
 
-Importante: he documentado las herramientas que aparecen en tu Dockerfile. Antes de publicar, verifica que todos los kernels y las herramientas de Foundry se instalen correctamente en la imagen final; que aparezcan en el README no garantiza que estén disponibles en todas las versiones.
+Para que el README refleje las versiones reales de cada publicación, lo ideal es generar automáticamente una tabla de versiones durante el build y conservarla como artefacto de la imagen.
