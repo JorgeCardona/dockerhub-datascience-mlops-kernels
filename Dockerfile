@@ -490,6 +490,39 @@ jupyter kernelspec list; \
 npm cache clean --force; \
 rm -rf /tmp/* /var/tmp/*
 
+# Complete Blockchain Development Tools
+# Ganache, Hardhat, Ethers.js, and Foundry
+RUN set -eux; \
+    node --version; \
+    npm install -g ganache; \
+    mkdir -p /opt/solidity-workspace; \
+    cd /opt/solidity-workspace; \
+    printf '%s\n' \
+      '{"name":"solidity-workspace","version":"1.0.0","private":true}' \
+      > package.json; \
+    npm install --save-dev --save-exact \
+      hardhat@2.26.3 \
+      @nomicfoundation/hardhat-ethers@3.0.8 \
+      ethers@6; \
+    curl -fsSL https://raw.githubusercontent.com/foundry-rs/foundryup/HEAD/foundryup-init.sh \
+      | bash; \
+    export PATH="/root/.foundry/bin:$PATH"; \
+    foundryup; \
+    solc --version; \
+    ganache --version; \
+    ./node_modules/.bin/hardhat --version; \
+    forge --version; \
+    cast --version; \
+    anvil --version; \
+    chisel --version; \
+    npm ls hardhat @nomicfoundation/hardhat-ethers ethers
+
+# 18. Personalización de Display Names de los Kernels
+RUN python -m ipykernel install --sys-prefix --name python3 --display-name "Python - ML - Data Science"
+RUN sed -i 's/"display_name": ".*"/"display_name": "SoS - Multi-language Notebook"/' /usr/local/share/jupyter/kernels/sos/kernel.json
+RUN sed -i 's/"display_name": ".*"/"display_name": "Ruby"/' /root/.local/share/jupyter/kernels/ruby3/kernel.json
+RUN OCTAVE_PATH=$(jupyter kernelspec list --json | grep -o '"/[^"]*octave"' | head -n 1 | tr -d '"') && sed -i 's/"display_name": ".*"/"display_name": "MATLAB \/ Octave"/' "${OCTAVE_PATH}/kernel.json"
+RUN sed -i 's/"display_name"[[:space:]]*:[[:space:]]*".*"/"display_name": "Julia"/' /root/.local/share/jupyter/kernels/julia-1.13/kernel.json
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends librsvg2-bin; \
@@ -499,13 +532,6 @@ RUN set -eux; \
       /usr/local/share/jupyter/kernels/java/logo-svg.svg \
       -o /usr/local/share/jupyter/kernels/java/logo-64x64.png; \
     rm -rf /var/lib/apt/lists/*
-    
-# 18. Personalización de Display Names de los Kernels
-RUN python -m ipykernel install --sys-prefix --name python3 --display-name "Python - ML - Data Science"
-RUN sed -i 's/"display_name": ".*"/"display_name": "SoS - Multi-language Notebook"/' /usr/local/share/jupyter/kernels/sos/kernel.json
-RUN sed -i 's/"display_name": ".*"/"display_name": "Ruby"/' /root/.local/share/jupyter/kernels/ruby3/kernel.json
-RUN OCTAVE_PATH=$(jupyter kernelspec list --json | grep -o '"/[^"]*octave"' | head -n 1 | tr -d '"') && sed -i 's/"display_name": ".*"/"display_name": "MATLAB \/ Octave"/' "${OCTAVE_PATH}/kernel.json"
-RUN sed -i 's/"display_name"[[:space:]]*:[[:space:]]*".*"/"display_name": "Julia"/' /root/.local/share/jupyter/kernels/julia-1.13/kernel.json
 
 # Habilita el kernel de kotlin para JupyterLab
 RUN mkdir -p /usr/lib/jvm/jdk-25-oracle-x64/bin
